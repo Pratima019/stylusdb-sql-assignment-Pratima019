@@ -3,15 +3,21 @@ const readCSV = require('./csvReader');
 const { parse } = require('json2csv');
 
 async function executeSELECTQuery(query) {
-    const { fields, table } = parseQuery(query);
+    const { fields, table, whereClauses} = parseQuery(query);
     const data = await readCSV(`${table}.csv`);
 
-    return data.map(row => {
-        const filteredRow = {};
+    const filteredData = whereClauses.length > 0
+        ? data.filter(row => whereClauses.every(clause => {
+        return row[clause.field] === clause.value;
+    })) 
+    : data;
+
+    return filteredData.map(row => {
+        const selectedRow = {};
         fields.forEach(field => {
-            filteredRow[field] = row[field];
+            selectedRow[field] = row[field];
         });
-        return filteredRow;
+        return selectedRow;
     });
 }
 
